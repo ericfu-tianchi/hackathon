@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -75,12 +76,19 @@ def log_game_latency(event: str, **fields: Any) -> None:
 
 
 def load_api_config() -> dict[str, str]:
-    if not API_CONFIG_PATH.exists():
-        return {}
-    try:
-        data = json.loads(API_CONFIG_PATH.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"API config file is invalid: {API_CONFIG_PATH}") from exc
-    if not isinstance(data, dict):
-        raise RuntimeError(f"API config must be a JSON object: {API_CONFIG_PATH}")
-    return {key: str(value).strip() for key, value in data.items() if value is not None}
+    if API_CONFIG_PATH.exists():
+        try:
+            data = json.loads(API_CONFIG_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"API config file is invalid: {API_CONFIG_PATH}") from exc
+        if not isinstance(data, dict):
+            raise RuntimeError(f"API config must be a JSON object: {API_CONFIG_PATH}")
+        return {key: str(value).strip() for key, value in data.items() if value is not None}
+    # 部署环境没有 api_config.json（它被 gitignore，不入库），改从环境变量读，
+    # 免得把 key 提交进仓库
+    env = {
+        "api_key": os.environ.get("GAME_API_KEY", ""),
+        "api_base": os.environ.get("GAME_API_BASE", ""),
+        "model": os.environ.get("GAME_MODEL", ""),
+    }
+    return {k: v for k, v in env.items() if v}

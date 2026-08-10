@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: heikesong
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GAME_API_KEY
+        sync: false
+      - key: GAME_API_BASE
+        value: https://api.openai-next.com/v1
+      - key: GAME_MODEL
+        value: claude-haiku-4-5-20251001
